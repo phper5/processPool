@@ -1,0 +1,23 @@
+{
+    "name": "softdd/processpool",
+    "description": "基于swoole封装的进程池",
+    "keywords": ["swoole", "process pool", "softdd"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "diandisoft",
+            "email": "coder5@qq.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "SoftDD\\ProcessPool\\": "src/"
+        }
+    },
+    "require": {
+        "php": ">=7.0.0",
+        "swoole": "*"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
