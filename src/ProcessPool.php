@@ -31,7 +31,7 @@ class ProcessPool
     public function log($data)
     {
         if ($this->debug){
-            echo($data);
+            var_dump($data);
         }
     }
     public function run(){

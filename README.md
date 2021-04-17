@@ -41,4 +41,6 @@ $process = new ProcessPool($taskList, $processNum, function ($task, $params) {
     var_dump($params);
 }, $params, 1);
 ```
-
+### todo 
+- 超时检测
+- 异常处理
