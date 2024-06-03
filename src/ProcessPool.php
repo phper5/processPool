@@ -19,9 +19,19 @@ class ProcessPool
         $this->taskList =$taskList;
         $this->debug =$debug;
         $this->processCallback =$processCallback;
-        $this->process = new \swoole_process(array($this, 'run'), false, 2);
+        $this->process = new \Swoole\Process(array($this, 'run'), false, 2);
         $this->process->start();
-        $this->process->wait();
+//        $this->process->wait();
+       // \swoole_process::wait();
+        \Swoole\Process::wait();
+
+        \Swoole\Process::signal(SIGCHLD, function($sig) {
+            //必须为false，非阻塞模式
+            while($ret =  \Swoole\Process::wait(false)) {
+                echo "PID={$ret['pid']}\n";
+            }
+        });
+
         $this->log("全部完成\n");
     }
     public function getData()
@@ -31,22 +41,34 @@ class ProcessPool
     public function log($data)
     {
         if ($this->debug){
-            var_dump($data);
+            if (is_string($data))
+            {
+                echo($data);
+            }
+            else{
+                print_r($data);
+            }
         }
     }
     public function run(){
         $params = $this->params;
         for ($i=0;$i<$this->processNum;$i++){
-            $process = new  \swoole_process(function ($worker)use($params){
+            echo 'hi';
+            $process = new  \Swoole\Process(function ($worker)use($params){
                 $this->log($worker->pid."开始运行");
-                \swoole_event_add($worker->pipe, function($pipe)use($worker,$params){
+                \Swoole\Event\Add($worker->pipe, function($pipe)use($worker,$params){
                     $task = $worker->read();
                     $this->log($worker->pid . ' getData: ' . $task." at ".time()."\n");
                     if($task == 'exit'){
                         $worker->exit();
                     }
                     if (is_callable($this->processCallback)){
-                        $data = call_user_func_array($this->processCallback,[$task,$params]);
+                        try {
+                            $data = call_user_func_array($this->processCallback,[$task,$params]);
+                        }catch (\Throwable $e){
+                            $this->log($e);
+                        }
+
                     }else{
                         echo '进程回调不可用 sleep 2';
                         $data=[];
@@ -65,7 +87,7 @@ class ProcessPool
         //全部初始化完毕后，进行绑定
         foreach ($this->workerList as $pid =>$process){
             $params = $this->params;
-            \swoole_event_add($process->pipe, function ($pipe) use ($process,$params){
+            \Swoole\Event\Add($process->pipe, function ($pipe) use ($process,$params){
                 $data = $process->read();
                 $this->log('get from '.$process->pid . ' '.$data);
 //                $this->resultData[] = json_decode($data,true);
@@ -76,7 +98,7 @@ class ProcessPool
                 }else{
                     $this->log ("任务处理完毕 关闭".$process->pid."\n");
                     $process->write("exit");
-                    $process->exit();//$process->pid;
+                    //$process->exit();//$process->pid;
                     unset($this->workerList[$process->pid]);
                     if (count($this->workerList) == 0){
                         $this->log( '可以退出了');
@@ -95,7 +117,7 @@ class ProcessPool
                 $this->log ("\n任务结束 ".$pid."\n");
                 unset($this->workerList[$pid]);
                 $process->write('exit');
-                $process->exit();
+                //$process->exit();
             }
         }
     }
