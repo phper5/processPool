@@ -56,7 +56,7 @@ class ProcessPool
             echo 'hi';
             $process = new  \Swoole\Process(function ($worker)use($params){
                 $this->log($worker->pid."开始运行");
-                \Swoole\Event\Add($worker->pipe, function($pipe)use($worker,$params){
+                \Swoole\Event::add($worker->pipe, function($pipe)use($worker,$params){
                     $task = $worker->read();
                     $this->log($worker->pid . ' getData: ' . $task." at ".time()."\n");
                     if($task == 'exit'){
@@ -87,7 +87,7 @@ class ProcessPool
         //全部初始化完毕后，进行绑定
         foreach ($this->workerList as $pid =>$process){
             $params = $this->params;
-            \Swoole\Event\Add($process->pipe, function ($pipe) use ($process,$params){
+            \Swoole\Event::add($process->pipe, function ($pipe) use ($process,$params){
                 $data = $process->read();
                 $this->log('get from '.$process->pid . ' '.$data);
 //                $this->resultData[] = json_decode($data,true);
